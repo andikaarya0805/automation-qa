@@ -14,7 +14,7 @@ export default defineConfig({
   globalSetup: require.resolve('./global-setup'),
 
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://127.0.0.1:3000',
     trace: 'on-first-retry', // Only record trace when it fails to save RAM/Disk
     screenshot: 'only-on-failure',
     storageState: 'storageState.json', // Path to save/load auth state

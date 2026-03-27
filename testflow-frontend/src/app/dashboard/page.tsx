@@ -1,14 +1,35 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Activity, ShieldCheck, Zap, Database, Search } from 'lucide-react';
+import { Activity, ShieldCheck, Zap, Database, Search, Terminal, Trash2 } from 'lucide-react';
+import { firestore } from '@/lib/firebase';
+import { collection, query, orderBy, limit, onSnapshot, deleteDoc, getDocs } from 'firebase/firestore';
 
 /**
  * TestFlow Dashboard - Premium Dynamic Implementation
  */
 export default function DashboardPage() {
   const [users, setUsers] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Real-time Logs Listener
+  useEffect(() => {
+    const q = query(collection(firestore, "test_logs"), orderBy("timestamp", "desc"), limit(50));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const logsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setLogs(logsData);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const clearLogs = async () => {
+    const q = query(collection(firestore, "test_logs"));
+    const snapshot = await getDocs(q);
+    snapshot.docs.forEach(async (doc) => {
+      await deleteDoc(doc.ref);
+    });
+  };
 
   // Fetch real data from our Laravel Backend (Port 9090)
   useEffect(() => {
@@ -164,13 +185,42 @@ export default function DashboardPage() {
             <Activity className="absolute bottom-[-20px] right-[-20px] w-40 h-40 text-white/10 group-hover:rotate-12 transition-transform duration-700" />
           </div>
 
-          <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-6 backdrop-blur-xl">
-             <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-widest">Global Status</h3>
-             <div className="space-y-4">
-                <StatusItem label="API Gateway" status="Healthy" color="bg-emerald-500" />
-                <StatusItem label="Runner Engine" status="Idle" color="bg-blue-500" />
-                <StatusItem label="Firestore Sync" status="Active" color="bg-emerald-500" />
-                <StatusItem label="Node Servers" status="Critical" color="bg-rose-500" />
+          <div className="bg-[#0f172a] border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+             <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-purple-500" />
+                  Live Runner Logs
+                </h3>
+                <button onClick={clearLogs} className="p-1.5 hover:bg-white/5 rounded-lg text-slate-500 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+             </div>
+             
+             <div className="h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar font-mono text-[11px]">
+                {logs.length === 0 ? (
+                  <div className="text-slate-600 italic py-4">Waiting for incoming logs...</div>
+                ) : (
+                  logs.map((log) => (
+                    <div key={log.id} className="flex gap-2 border-l-2 border-slate-800 pl-3 py-0.5">
+                      <span className={`font-bold shrink-0 ${
+                        log.level === 'ERROR' ? 'text-rose-500' : 
+                        log.level === 'SUCCESS' ? 'text-emerald-500' : 
+                        log.level === 'WARN' ? 'text-amber-500' : 'text-blue-500'
+                      }`}>
+                        [{log.level}]
+                      </span>
+                      <span className="text-slate-300 break-words">{log.message}</span>
+                    </div>
+                  ))
+                )}
+             </div>
+
+             <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                   <span className="text-[10px] text-slate-500 uppercase tracking-tighter">Listener Active</span>
+                </div>
+                <span className="text-[10px] text-slate-600">{logs.length} events</span>
              </div>
           </div>
         </div>

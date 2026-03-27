@@ -5,12 +5,19 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
+    "test:ci": "playwright test",
     "test:ui": "playwright test --ui",
+    "test:watch": "playwright test --watch",
+    "test:debug": "playwright test --debug",
     "report": "playwright show-report"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "firebase": "^12.11.0"
   }
 }

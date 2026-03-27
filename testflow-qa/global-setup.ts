@@ -1,6 +1,7 @@
 import { chromium, FullConfig } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { logTest, LogLevel } from './utils/logger';
 
 /**
  * Global Setup - Firebase Auth Bypass (Resilient Version)
@@ -14,8 +15,8 @@ async function globalSetup(config: FullConfig) {
   const page = await browser.newPage();
 
   try {
-    console.log(`--- Starting Global Setup (Auth Bypass) ---`);
-    console.log(`Targeting: ${baseURL}/login`);
+    await logTest(`🚀 Starting Global Setup (Auth Bypass)`, LogLevel.INFO);
+    await logTest(`Targeting: ${baseURL}/login`, LogLevel.INFO);
 
     // Step 1: Coba akses halaman login
     await page.goto(baseURL as string + '/login');
@@ -27,28 +28,33 @@ async function globalSetup(config: FullConfig) {
     await page.fill('input[type="email"]', user);
     await page.fill('input[type="password"]', pass);
     
+    await logTest(`Attempting login for: ${user}`, LogLevel.INFO);
+
     // Tunggu navigasi setelah klik login
     await Promise.all([
       page.waitForURL('**/dashboard', { timeout: 15000 }),
       page.click('button:has-text("SIGN IN")'),
     ]);
 
+    await logTest(`✅ Login successful, dashboard reached.`, LogLevel.SUCCESS);
+
     // Step 3: Simpan cookies & local storage
     await page.context().storageState({ path: storageStatePath });
-    console.log('✅ Auth state saved to storageState.json');
+    await logTest(`Auth state saved to storageState.json`, LogLevel.SUCCESS);
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('⚠️ Global setup warning/failed:', errorMessage);
+    await logTest(`❌ Global setup failed: ${errorMessage}`, LogLevel.ERROR);
     
     // Fallback: Jika gagal (server belum up / login error), 
     // pastikan file storageState.json tetap ada agar test tidak crash ENOENT.
     if (!fs.existsSync(storageStatePath)) {
         fs.writeFileSync(storageStatePath, JSON.stringify({ cookies: [], origins: [] }));
-        console.log('👷 Created dummy storageState.json as fallback.');
+        await logTest(`Created dummy storageState.json as fallback.`, LogLevel.WARN);
     }
   } finally {
     await browser.close();
+    await logTest(`Browser closed, setup sequence finished.`, LogLevel.INFO);
   }
 }
 
