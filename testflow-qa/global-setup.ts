@@ -38,7 +38,8 @@ async function globalSetup(config: FullConfig) {
     console.log('✅ Auth state saved to storageState.json');
 
   } catch (error) {
-    console.error('⚠️ Global setup warning/failed:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('⚠️ Global setup warning/failed:', errorMessage);
     
     // Fallback: Jika gagal (server belum up / login error), 
     // pastikan file storageState.json tetap ada agar test tidak crash ENOENT.
