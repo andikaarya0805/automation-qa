@@ -1,0 +1,28 @@
+# Next.js
+.next/
+node_modules/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+testflow-qa/storageState.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Laravel legacy (if any)
+testflow-backend/
+vendor/
+public/storage
+storage/*.key
+.phpunit.result.cache
